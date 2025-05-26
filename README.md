@@ -9,15 +9,45 @@ The goal is to evaluate memory usage and compaction strategies (e.g. hourly aver
 ## 💡 Use Case
 
 Simulate:
-- Up to **1000 devices**
+- **1000 devices**
 - 5 metrics per device: `temp`, `volt`, `current`, `gaz`, `alarme`
 - Measurements every **10 minutes**
 - Historical retention: **3 years**
-- Configurable compaction rules
+- Configurable compaction rules 
+
+### 📊 Volume Simulated
+
+This simulation inserts:
+
+- **1000 devices**
+- **5 metrics per device**
+- **1 data point every 10 minutes** → 144 points/day
+- **3 years of history**
+
+Which results in:
+
+- `24*(60/10) × 365 × 3 = 157,680` points of measure over 3 years
+- `157,680 × 5 metrics × 1000 devices = 788,400,000` TS.ADD operations
+
+You can adjust this volume using command-line arguments.
 
 Compare:
 - Raw time series vs. aggregated compaction
 - Memory footprint with or without retention policy
+
+### 📉 Compaction Strategy
+
+When enabled, raw time series data is retained for **90 days** (default value, can be overriden with `--raw_retention_days XX` days ).
+
+This short-term retention keeps full-resolution datapoints (10-minute intervals) only for the most recent period. 
+For longer-term analysis, RedisTimeSeries applies *compaction rules* which store:
+
+- **1h average**: aggregated hourly mean values
+- **1d max**: daily maximums
+
+These aggregated series preserve historical trends while drastically reducing memory usage compared to full-resolution storage over 3 years.
+
+This enables fast queries and visualization while controlling resource usage on memory-constrained systems.
 
 ---
 
@@ -46,3 +76,4 @@ pip install -r requirements.txt
 
 # 5. Run the simulation with compaction enabled
 ./run_script_compaction.sh
+```
