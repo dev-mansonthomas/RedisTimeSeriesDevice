@@ -29,7 +29,41 @@ Which results in:
 - `24*(60/10) × 365 × 3 = 157,680` points of measure over 3 years
 - `157,680 × 5 metrics × 1000 devices = 788,400,000` TS.ADD operations
 
+
 You can adjust this volume using command-line arguments.
+
+### 📦 Without vs With Compaction
+
+#### 🔹 Without compaction
+
+Only raw time series are created:
+
+```bash
+TS.CREATE device:42:temp
+```
+
+No retention or aggregation is applied, which means all data is stored at full resolution indefinitely unless manually deleted.
+
+#### 🔸 With compaction enabled
+
+RedisTimeSeries creates:
+- The raw series with 90-day retention
+- Two aggregated series (`1h_avg`, `1d_max`) for long-term trends
+
+```bash
+# Raw series with 90-day retention (in milliseconds)
+TS.CREATE device:42:temp RETENTION 7776000000
+
+# Aggregated series (no retention)
+TS.CREATE device:42:temp:1h_avg
+TS.CREATE device:42:temp:1d_max
+
+# Compaction rules
+TS.CREATERULE device:42:temp device:42:temp:1h_avg AGGREGATION avg 3600000
+TS.CREATERULE device:42:temp device:42:temp:1d_max AGGREGATION max 86400000
+```
+
+This setup reduces memory usage significantly while still allowing visualization and long-term monitoring.
 
 Compare:
 - Raw time series vs. aggregated compaction
